@@ -79,5 +79,6 @@ dependencies {
     implementation("androidx.camera:camera-view:1.5.2")
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("androidx.compose.ui:ui-text-google-fonts:1.10.0")
 
 }

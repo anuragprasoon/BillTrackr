@@ -40,17 +40,34 @@ import androidx.compose.ui.Alignment
 import java.io.File
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
 import coil.compose.rememberAsyncImagePainter
+import androidx.compose.ui.text.googlefonts.GoogleFont
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.googlefonts.Font
+import androidx.compose.ui.text.style.TextAlign
 
 
+val provider = GoogleFont.Provider(
+    providerAuthority = "com.google.android.gms.fonts",
+    providerPackage = "com.google.android.gms",
+    certificates = R.array.com_google_android_gms_fonts_certs
+)
 
+val fontName = GoogleFont("Urbanist")
 
-
-
+val fontFamily = FontFamily(
+    Font(googleFont = fontName, fontProvider = provider)
+)
 
 
 
 class MainActivity : ComponentActivity() {
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         Log.d("API_KEY_TEST", BuildConfig.GEMINI_API_KEY)
@@ -87,14 +104,43 @@ fun HomeScreen(navController: NavController,viewModel: BillViewData) {
             .fillMaxSize()
             .padding(16.dp)
     ) {
+        Image(
+            painter = painterResource(id = R.drawable.billtrackr),
+            contentDescription = "App Icon",
+            modifier = Modifier
+                .size(60.dp)
+        )
 
         Text(
             text = "My Bills",
-            style = MaterialTheme.typography.headlineMedium
+            style = MaterialTheme.typography.headlineMedium,
+            fontFamily = fontFamily,
+            fontWeight = FontWeight.Bold
         )
 
         Spacer(modifier = Modifier.height(16.dp))
-
+        if(bills.isEmpty()){
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                ){
+                Image(
+                    painter = painterResource(id = R.drawable.no_bills),
+                    contentDescription = "No bills found",
+                    modifier = Modifier
+                        .size(150.dp)
+                        .align(Alignment.CenterHorizontally)
+                )
+                Text(
+                    fontFamily=fontFamily,
+                    fontWeight = FontWeight.Bold,
+                    color = colorResource(R.color.secondary_text),
+                    text = "Scan and Save Bills",
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
         LazyColumn(
             modifier = Modifier.weight(1f).padding(top = 8.dp)
         ) {
@@ -105,11 +151,19 @@ fun HomeScreen(navController: NavController,viewModel: BillViewData) {
 
         Button(
             onClick = {
-                navController.navigate(Screen.Addbill.route)
+                navController.navigate(Screen.Camera.route)
                       },
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = colorResource(id = R.color.button_bg)
+            )
         ) {
-            Text("Add Bill")
+            Text(
+                text="Add Bill +",
+                fontFamily= fontFamily,
+                fontWeight = FontWeight.SemiBold,
+                color = colorResource(id = R.color.button_text)
+            )
         }
     }
 }
@@ -117,10 +171,11 @@ fun HomeScreen(navController: NavController,viewModel: BillViewData) {
 @Composable
 fun BillItem(bill: Bill) {
     Card(
+        colors = CardDefaults.cardColors(containerColor = colorResource(id=R.color.cardbg)),
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Row(
             modifier = Modifier
@@ -130,7 +185,10 @@ fun BillItem(bill: Bill) {
         ) {
 
             Column {
+
                 Text(
+                    fontFamily=fontFamily,
+                    fontWeight = FontWeight.SemiBold,
                     text = bill.merchant,
                     style = MaterialTheme.typography.titleMedium
                 )
@@ -138,6 +196,8 @@ fun BillItem(bill: Bill) {
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
+                    fontFamily=fontFamily,
+                    fontWeight = FontWeight.Medium,
                     text = bill.date,
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -145,9 +205,11 @@ fun BillItem(bill: Bill) {
             }
 
             Text(
+                fontFamily=fontFamily,
+                fontWeight = FontWeight.Bold,
                 text = "₹${bill.amount}",
                 style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.primary
+                color = colorResource(R.color.amount_text)
             )
         }
     }
@@ -208,7 +270,8 @@ fun AddBillScreen(
                 )
             }
 
-            Text("Add Bill", style = MaterialTheme.typography.headlineMedium)
+            Text("Add Bill", style = MaterialTheme.typography.headlineMedium,
+                fontFamily=fontFamily, fontWeight = FontWeight.Bold)
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -239,30 +302,31 @@ fun AddBillScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            Button(
-                onClick = { navController.navigate(Screen.Camera.route) },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text("Scan Bill")
-            }
 
             Button(
                 enabled = !isExtracting,
                 onClick = {
+                    val parsedAmount = parseAmount(amount)
+
                     if (merchant.isNotBlank() && amount.isNotBlank() && date.isNotBlank()) {
                         viewModel.addBills(
                             Bill(
                                 merchant = merchant,
-                                amount = amount.toInt(),
+                                amount = parsedAmount,
                                 date = date
                             )
                         )
-                        navController.popBackStack()
+                        navController.navigate(Screen.Home.route)
                     }
                 },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = colorResource(id = R.color.button_bg))
             ) {
-                Text("Save Bill")
+                Text("Save Bill",fontFamily= fontFamily,
+                    fontWeight = FontWeight.SemiBold,
+                    color = colorResource(id = R.color.button_text))
             }
         }
 
@@ -371,7 +435,7 @@ fun CameraScreen(
                         ) {
                             Log.i("TAG", "File saved: ${photoFile.absolutePath}")
                             onImageCaptured(photoFile.absolutePath)
-                            navController.popBackStack()
+                            navController.navigate(Screen.Addbill.route)
                         }
 
                         override fun onError(exception: ImageCaptureException) {
@@ -382,10 +446,21 @@ fun CameraScreen(
                 )
             },
             enabled = isCameraReady,   // 👈 IMPORTANT
-            modifier = Modifier.padding(24.dp)
+            modifier = Modifier.padding(24.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = colorResource(id = R.color.button_bg))
         ) {
-            Text(if (isCameraReady) "Capture" else "Opening Camera…")
+            Text(text="Scan Bill",
+                fontFamily= fontFamily,
+                fontWeight = FontWeight.SemiBold,
+                color = colorResource(id = R.color.button_text)
+            )
         }
 
     }
+}
+
+fun parseAmount(amount: String): Int {
+    return amount
+        .replace("[^0-9.]".toRegex(), "") // keep only digits
+        .toIntOrNull() ?: 0
 }
